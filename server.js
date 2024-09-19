@@ -4,23 +4,43 @@ const { parseEmail } = require('./services/emailParser');
 const { sendToWebhook } = require('./services/webhookService');
 require('aws-sdk/lib/maintenance_mode_message').suppress = true;
 
+// Create a queue to store parsed emails
+const emailQueue = [];
+let isProcessingQueue = false;
+
+// Function to process the queue
+function processQueue() {
+  if (isProcessingQueue || emailQueue.length === 0) return;
+
+  isProcessingQueue = true;
+  const parsed = emailQueue.shift();
+
+  sendToWebhook(parsed)
+    .then(() => {
+      console.log('Successfully sent to webhook');
+      isProcessingQueue = false;
+      processQueue(); // Process next item in queue
+    })
+    .catch(error => {
+      console.error('Webhook error:', error.message);
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+      }
+      isProcessingQueue = false;
+      processQueue(); // Process next item in queue even if there's an error
+    });
+}
+
 const server = new SMTPServer({
   onData(stream, session, callback) {
     parseEmail(stream)
       .then(parsed => {
-        sendToWebhook(parsed)
-          .then(() => {
-            console.log('Successfully sent to webhook');
-            callback();
-          })
-          .catch(error => {
-            console.error('Webhook error:', error.message);
-            if (error.response) {
-              console.error('Response status:', error.response.status);
-              console.error('Response data:', error.response.data);
-            }
-            callback(new Error('Failed to send to webhook'));
-          });
+        // Add parsed email to queue instead of sending immediately
+        emailQueue.push(parsed);
+        console.log('Email added to queue. Queue length:', emailQueue.length);
+        callback();
+        processQueue(); // Try to process queue
       })
       .catch(error => {
         console.error('Parsing error:', error);

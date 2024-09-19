@@ -35,7 +35,7 @@ After trying a number of different solutions, I decided to develop my own simple
    npm install
    ```
 
-3. Copy the `.env.example` file to `.env` and set the required configuration:
+3. Copy the `.env.example` file to `.env` and set the required configuration: (eg. `mv .env.example .env`)
    - `MAX_FILE_SIZE`: Maximum size of attachments to process, in bytes (default: 5MB)
    - `AWS_REGION`: Your AWS region
    - `AWS_ACCESS_KEY_ID`: Your AWS access key ID
