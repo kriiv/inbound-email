@@ -1,0 +1,11 @@
+{
+    "dependencies": {
+        "@aws-sdk/client-s3": "^3.x.x",
+        "@aws-sdk/lib-storage": "^3.x.x",
+        "aws-sdk": "^2.x",
+        "axios": "^1.7.7",
+        "dotenv": "^16.4.5",
+        "mailparser": "^3.7.1",
+        "smtp-server": "^3.13.5"
+    }
+}
