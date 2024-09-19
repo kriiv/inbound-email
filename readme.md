@@ -2,25 +2,23 @@
 
 Author: [Martin Alexander](https://www.linkedin.com/in/martin-alexander)
 
-A simple, small script which provides an SMTP server that receives emails, parses all content (including headers), stores attachments in Amazon S3, and forwards the email content to a webhook.
-
-After trying a number of different solutions, I decided to develop my own simple server to handle my inbound parsing. At a certain scale, paid solutions are too expensive and do not allow for control over the parsing mechanism.
+A simple, efficient script that provides an SMTP server to receive emails, parse content (including headers), store attachments in Amazon S3, and forward email content to a webhook. Now with improved handling for multiple concurrent SMTP sessions and webhook requests.
 
 ## Features
 
-- SMTP server to receive emails
+- SMTP server to receive emails concurrently
 - Parses incoming emails using `mailparser`
 - Uploads attachments to Amazon S3
 - Forwards parsed email content to a specified webhook
 - Configurable via environment variables
 - Handles large attachments gracefully
-- In-memory queue for processing
+- Robust queue system for processing multiple emails and webhook requests simultaneously
 
 ## Prerequisites
 
 - Node.js (v18 or later recommended)
-- If saving attachments, an Amazon Web Services (AWS) account with S3 access or a compatible system.
-- A HTTP(s) webhook endpoint to receive the processed emails.
+- If saving attachments, an Amazon Web Services (AWS) account with S3 access or a compatible system
+- A HTTP(s) webhook endpoint to receive the processed emails
 
 ## Installation
 
@@ -44,12 +42,13 @@ After trying a number of different solutions, I decided to develop my own simple
    - `PORT`: The port for the SMTP server to listen on (default: 25)
    - `WEBHOOK_URL`: The URL where parsed emails will be sent (required)
    - `SMTP_SECURE`: Set to 'true' for TLS support (default: false)
+   - `WEBHOOK_CONCURRENCY`: Number of concurrent webhook requests (default: 5)
 
 ## Usage
 
 Start the server:
 ```
-node server.js
+npm start
 ```
 
 The SMTP server will start and listen on the specified port (default: 25) on all network interfaces.

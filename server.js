@@ -4,43 +4,32 @@ const { parseEmail } = require('./services/emailParser');
 const { sendToWebhook } = require('./services/webhookService');
 require('aws-sdk/lib/maintenance_mode_message').suppress = true;
 
-// Create a queue to store parsed emails
-const emailQueue = [];
-let isProcessingQueue = false;
+// Use a more robust queue implementation
+const Queue = require('better-queue');
 
-// Function to process the queue
-function processQueue() {
-  if (isProcessingQueue || emailQueue.length === 0) return;
-
-  isProcessingQueue = true;
-  const parsed = emailQueue.shift();
-
-  sendToWebhook(parsed)
-    .then(() => {
-      console.log('Successfully sent to webhook');
-      isProcessingQueue = false;
-      processQueue(); // Process next item in queue
-    })
-    .catch(error => {
-      console.error('Webhook error:', error.message);
-      if (error.response) {
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
-      }
-      isProcessingQueue = false;
-      processQueue(); // Process next item in queue even if there's an error
-    });
-}
+// Create a queue for webhook sending
+const webhookQueue = new Queue(async function (parsed, cb) {
+  try {
+    await sendToWebhook(parsed);
+    console.log('Successfully sent to webhook');
+    cb(null);
+  } catch (error) {
+    console.error('Webhook error:', error.message);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
+    }
+    cb(error);
+  }
+}, { concurrent: config.WEBHOOK_CONCURRENCY || 5 });
 
 const server = new SMTPServer({
   onData(stream, session, callback) {
     parseEmail(stream)
       .then(parsed => {
-        // Add parsed email to queue instead of sending immediately
-        emailQueue.push(parsed);
-        console.log('Email added to queue. Queue length:', emailQueue.length);
+        webhookQueue.push(parsed);
+        console.log('Email added to queue. Queue size:', webhookQueue.getStats().total);
         callback();
-        processQueue(); // Try to process queue
       })
       .catch(error => {
         console.error('Parsing error:', error);

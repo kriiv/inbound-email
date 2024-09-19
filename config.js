@@ -9,6 +9,7 @@ module.exports = {
   MAX_FILE_SIZE: process.env.MAX_FILE_SIZE || 5 * 1024 * 1024,
   BUCKET_NAME: process.env.S3_BUCKET_NAME,
   SMTP_SECURE: process.env.SMTP_SECURE === 'true',
+  WEBHOOK_CONCURRENCY: process.env.WEBHOOK_CONCURRENCY || 5,
 
   s3: new AWS.S3({
     region: process.env.AWS_REGION,
